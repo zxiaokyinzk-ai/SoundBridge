@@ -1,0 +1,12 @@
+bin/
+obj/
+.dotnet-home/
+.nuget/
+dist/
+TestResults/
+.vs/
+*.user
+artifacts/
+*-test.json
+*devices.json
+publish.log

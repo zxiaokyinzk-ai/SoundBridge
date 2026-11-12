@@ -1,0 +1,144 @@
+<Window x:Class="AudioRouter.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="声桥 · 音频控制台"
+        Width="1010" SizeToContent="Height" MinWidth="800" MinHeight="370" MaxHeight="{Binding Source={x:Static SystemParameters.WorkArea}, Path=Height}" WindowStartupLocation="CenterScreen"
+        Loaded="LoadTheme" Style="{StaticResource {x:Type Window}}" UseLayoutRounding="True">
+    <Window.Resources>
+        <Style x:Key="SmallLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+    </Window.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <Grid Margin="24,18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <DockPanel LastChildFill="False">
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+                <Border Background="{DynamicResource SealBrush}" Width="36" Height="36" CornerRadius="7" Margin="0,0,10,0">
+                    <Path Stroke="{DynamicResource OnAccentBrush}" StrokeThickness="2.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                          HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 2,7 L 2,15 M 7,2 L 7,20 M 12,5 L 12,17 M 17,0 L 17,22"/>
+                </Border>
+                <TextBlock Text="声桥" FontSize="27" FontWeight="SemiBold"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+                <TextBlock Text="主题" Style="{StaticResource SmallLabel}" Margin="0,0,8,0"/>
+                <ComboBox x:Name="ThemePicker" Width="90" SelectionChanged="ThemeChanged" AutomationProperties.Name="主题">
+                    <ComboBoxItem Content="水墨"/><ComboBoxItem Content="黑夜"/><ComboBoxItem Content="青瓷"/>
+                </ComboBox>
+            </StackPanel>
+        </DockPanel>
+
+        <Border Grid.Row="1" Margin="0,16,0,0" Padding="16,12" CornerRadius="9" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+            <Grid>
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <DockPanel>
+                    <TextBlock Text="游戏麦克风" FontWeight="SemiBold" FontSize="18" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                    <TextBlock x:Name="CableSignalText" Text="等待游戏麦信号" HorizontalAlignment="Right" Style="{StaticResource SmallLabel}" TextWrapping="Wrap"/>
+                </DockPanel>
+                <Grid Grid.Row="1" Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="1.1*"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <StackPanel Margin="0,0,10,0">
+                        <TextBlock Text="分享的应用或文件" Style="{StaticResource SmallLabel}" Margin="0,0,0,4"/>
+                        <Grid>
+                            <ComboBox x:Name="ShareSourcePicker" DisplayMemberPath="Name" AutomationProperties.Name="分享的应用或文件"/>
+                            <TextBlock Margin="11,0,25,0" VerticalAlignment="Center" IsHitTestVisible="False" Foreground="{DynamicResource MutedBrush}" TextTrimming="CharacterEllipsis">
+                                <TextBlock.Style><Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Setter Property="Text" Value="选择正在播放的应用"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedIndex, ElementName=ShareSourcePicker}" Value="-1"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                                        <DataTrigger Binding="{Binding HasItems, ElementName=ShareSourcePicker}" Value="False"><Setter Property="Text" Value="先播放音乐，或添加音频文件"/></DataTrigger>
+                                    </Style.Triggers>
+                                </Style></TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                        <TextBlock Text="我的麦克风" Style="{StaticResource SmallLabel}" Margin="0,0,0,4"/>
+                        <ComboBox x:Name="VoiceMicPicker" DisplayMemberPath="Name" AutomationProperties.Name="我的麦克风"/>
+                    </StackPanel>
+                    <Button Grid.Column="2" x:Name="ConnectGameButton" Click="ConnectGameMic_Click" Style="{StaticResource PrimaryButton}" MinWidth="118" Height="34" Padding="12,3" VerticalAlignment="Bottom"
+                            ToolTip="把所选声音发送到虚拟话筒并临时设为默认录音和通信设备，再次点击还原。">接入游戏麦</Button>
+                </Grid>
+                <TextBlock Grid.Row="2" Text="连接时将虚拟线设为默认话筒，两端音量临时调至 100%。系统播放若正走虚拟线，会切到监听设备。断开后还原。"
+                           ToolTip="调整的是 CABLE Input 和 CABLE Output 的设备音量。游戏麦和耳返可分别开关。" Style="{StaticResource SmallLabel}" Margin="0,7,0,0" TextWrapping="Wrap"/>
+                <Grid Grid.Row="3" Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="88"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="监听设备" Style="{StaticResource SmallLabel}" Margin="0,0,8,0"/>
+                    <ComboBox x:Name="MonitorDevicePicker" Grid.Column="1" DisplayMemberPath="Name" AutomationProperties.Name="监听设备" MinHeight="30"/>
+                    <TextBlock Text="耳返音量" Grid.Column="2" Style="{StaticResource SmallLabel}" Margin="15,0,6,0"/>
+                    <Slider Grid.Column="3" x:Name="MonitorVolume" Value="35" Minimum="0" Maximum="100" ValueChanged="MonitorVolume_Changed" ToolTip="调节自己耳机里的麦克风音量" AutomationProperties.Name="耳返音量"/>
+                    <Button Grid.Column="4" x:Name="MonitorButton" Height="30" MinWidth="118" Margin="12,0,0,0" Padding="12,2" Click="ToggleMonitoring_Click"
+                            ToolTip="在所选监听设备中听自己的麦克风">开启耳返</Button>
+                </Grid>
+            </Grid>
+        </Border>
+        <DockPanel Grid.Row="2" Margin="0,9,0,6">
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                <Button Click="AddFile_Click" Padding="10,5" Margin="0,0,6,0">添加音频文件</Button>
+                <Button Click="Refresh_Click" Style="{StaticResource QuietButton}" Padding="10,5">刷新</Button>
+            </StackPanel>
+            <TextBlock Text="{Binding Detection}" Foreground="{DynamicResource MutedBrush}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0" TextTrimming="CharacterEllipsis"/>
+        </DockPanel>
+        <Expander Grid.Row="3" Header="按设备分配声音" FontWeight="SemiBold" FontSize="13">
+            <Border Margin="0,6,0,2" Background="{DynamicResource PanelBrush}" CornerRadius="7" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" Padding="1">
+            <DataGrid x:Name="Matrix" Height="246" FontWeight="Normal" ItemsSource="{Binding Sources}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                      CanUserReorderColumns="False" CanUserSortColumns="False" IsReadOnly="True" RowHeaderWidth="0" HeadersVisibility="Column"
+                      FrozenColumnCount="1" RowHeight="58" ColumnHeaderHeight="53" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource BorderBrush}"
+                      SelectionUnit="Cell" BorderThickness="0" Background="{DynamicResource PanelBrush}" Foreground="{DynamicResource TextBrush}" RowBackground="{DynamicResource PanelBrush}" HorizontalScrollBarVisibility="Auto">
+                <DataGrid.Resources>
+                    <Style TargetType="DataGridCell"><Setter Property="BorderThickness" Value="0"/><Setter Property="Padding" Value="8,2"/>
+                        <Style.Triggers><Trigger Property="IsSelected" Value="True"><Setter Property="Background" Value="{DynamicResource AccentSoftBrush}"/><Setter Property="Foreground" Value="{DynamicResource TextBrush}"/></Trigger></Style.Triggers>
+                    </Style>
+                    <Style TargetType="DataGridColumnHeader"><Setter Property="Background" Value="{DynamicResource CanvasBrush}"/><Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
+                        <Setter Property="BorderThickness" Value="0"/><Setter Property="Padding" Value="10,4"/><Setter Property="FontWeight" Value="SemiBold"/></Style>
+                </DataGrid.Resources>
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="声音来源" Width="190"><DataGridTemplateColumn.CellTemplate><DataTemplate>
+                        <StackPanel VerticalAlignment="Center" Margin="10,0"><TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/>
+                            <TextBlock Text="{Binding Status}" FontSize="11" Foreground="{DynamicResource MutedBrush}" Margin="0,3" TextTrimming="CharacterEllipsis" ToolTip="{Binding Status}"/>
+                            <ProgressBar Value="{Binding Meter, Mode=OneWay}" Height="3" Maximum="100"/></StackPanel>
+                    </DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="转发音量" Width="100"><DataGridTemplateColumn.CellTemplate><DataTemplate>
+                        <StackPanel VerticalAlignment="Center" Margin="8,0"><Slider Value="{Binding Gain,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" ToolTip="调节声桥转发的声音。原声音量在应用内调节。"/>
+                            <CheckBox Content="转发静音" FontSize="10" IsChecked="{Binding Muted,Mode=TwoWay}"/></StackPanel>
+                    </DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+            </Border>
+        </Expander>
+        <Grid Grid.Row="4" Margin="0,6,0,0">
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+            <Expander x:Name="GameMicPanel" Header="检查游戏麦" FontSize="12">
+                <DockPanel Margin="16,3,0,5"><Button DockPanel.Dock="Right" Click="OpenRecordingSettings_Click" VerticalAlignment="Top" Style="{StaticResource QuietButton}">录音设备设置</Button>
+                    <ScrollViewer MaxHeight="84" VerticalScrollBarVisibility="Auto"><TextBlock x:Name="GameMicResult" Text="正在读取录音会话…" TextWrapping="Wrap"/></ScrollViewer>
+                </DockPanel>
+            </Expander>
+            <Expander Grid.Row="1" Header="更多设置" FontSize="12">
+                <ScrollViewer MaxHeight="128" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="16,5,0,3">
+                        <WrapPanel>
+                            <Button Click="SavePreset_Click" Style="{StaticResource QuietButton}">保存方案</Button><Button Click="LoadPreset_Click" Style="{StaticResource QuietButton}">载入并连接</Button>
+                            <Button Click="Stop_Click" Style="{StaticResource QuietButton}">恢复系统播放</Button><Button Click="OpenSoundSettings_Click" Style="{StaticResource QuietButton}">系统声音</Button>
+                            <Button Click="OpenCableSite_Click" Style="{StaticResource QuietButton}">VB-CABLE 官网 ↗</Button><Button Click="ShowHelp_Click" Style="{StaticResource QuietButton}">使用指南</Button>
+                        </WrapPanel>
+                        <TextBlock Text="{Binding CableStatusText}" Style="{StaticResource SmallLabel}" TextWrapping="Wrap" Margin="3,3,0,6"/>
+                        <Expander Header="各输出口的转发音量">
+                            <ItemsControl ItemsSource="{Binding Outputs}" Margin="12,2"><ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate><DataTemplate><StackPanel Width="155" Margin="4,3,14,2"><TextBlock Text="{Binding DeviceName}" FontSize="11" TextTrimming="CharacterEllipsis" ToolTip="{Binding DeviceName}"/>
+                                    <Slider Value="{Binding Gain,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding Available}"/></StackPanel></DataTemplate></ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Expander>
+                    </StackPanel>
+                </ScrollViewer>
+            </Expander>
+        </Grid>
+        <Border Grid.Row="5" Margin="0,7,0,0" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderBrush}" Padding="0,6,0,0">
+            <TextBlock Text="{Binding StatusText}" ToolTip="{Binding StatusText}" TextWrapping="Wrap" Style="{StaticResource SmallLabel}"/>
+        </Border>
+    </Grid>
+    </ScrollViewer>
+</Window>
